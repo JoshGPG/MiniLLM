@@ -70,14 +70,48 @@ class PositionalEncoding(nn.Module):
         return x + self.pos_embedding[:, :seq_len, :]
 
 
+class SelfAttention(nn.Module):
+    """Multi-head self-attention layer."""
+
+    def __init__(
+        self, emb_dim: int, num_heads: int, dropout: float = 0.0
+    ) -> None:
+        super().__init__()
+        self.attn = nn.MultiheadAttention(
+            embed_dim=emb_dim,
+            num_heads=num_heads,
+            dropout=dropout,
+            batch_first=True,
+        )
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        attn_mask: torch.Tensor | None = None,
+        key_padding_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        out, _ = self.attn(
+            x,
+            x,
+            x,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask,
+            need_weights=False,
+        )
+        return self.dropout(out)
+
+
 @dataclass
 class ModelConfig:
     """Configuration for :class:`MiniLLM`."""
 
     vocab_size: int
     emb_dim: int
+    num_heads: int
     max_seq_len: int = 512
     learnable_pos: bool = False
+    dropout: float = 0.0
 
 
 class MiniLLM(nn.Module):
@@ -90,10 +124,9 @@ class MiniLLM(nn.Module):
         self.pos_encoding = PositionalEncoding(
             config.emb_dim, config.max_seq_len, config.learnable_pos
         )
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=config.emb_dim, nhead=4, batch_first=True
+        self.attention = SelfAttention(
+            config.emb_dim, config.num_heads, dropout=config.dropout
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
         self.linear = nn.Linear(config.emb_dim, config.vocab_size)
 
     def forward(self, ids: torch.Tensor) -> torch.Tensor:
@@ -101,6 +134,6 @@ class MiniLLM(nn.Module):
 
         x = self.embedding(ids)
         x = self.pos_encoding(x)
-        x = self.transformer(x)
+        x = self.attention(x)
         return self.linear(x)
 
