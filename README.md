@@ -70,3 +70,42 @@ data/
 ```
 
 All files in `data/` use the [JSON Lines](https://jsonlines.org/) format.
+
+## Quick Model Usage
+
+The snippet below shows how to instantiate the transformer, run a forward pass,
+compute cross‑entropy loss for next‑token prediction, and inspect the model
+size.
+
+```python
+import torch
+from src.model import MiniTransformer, ModelConfig
+
+# Initialize a tiny model
+config = ModelConfig(
+    vocab_size=5000,
+    max_seq_len=32,
+    emb_dim=256,
+    num_layers=2,
+    num_heads=2,
+)
+model = MiniTransformer(config)
+
+# Forward pass
+ids = torch.randint(0, config.vocab_size, (1, 32))
+logits = model(ids)
+
+# Cross-entropy loss for next-token prediction
+targets = torch.randint(0, config.vocab_size, (1, 32))
+loss = torch.nn.functional.cross_entropy(
+    logits.view(-1, config.vocab_size),
+    targets.view(-1),
+)
+
+# Parameter count and memory footprint (float32)
+params = sum(p.numel() for p in model.parameters())
+print(f"{params/1e6:.2f}M parameters (~{params*4/1e6:.2f} MB)")
+```
+
+Running the code prints approximately `3.35M parameters (~13 MB)` for the
+configuration above.
