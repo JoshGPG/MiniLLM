@@ -8,7 +8,7 @@ import torch
 from torch import nn, optim
 
 from .model import MiniLLM
-from .tokenizer import SimpleTokenizer
+from .tokenizer import Tokenizer
 
 
 def parse_args() -> argparse.Namespace:
@@ -19,8 +19,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    tokenizer = SimpleTokenizer()
-    tokenizer.build_vocab(["hello world"])
+    tokenizer = Tokenizer()
+    tokenizer.fit(["hello world"])
 
     model = MiniLLM(vocab_size=len(tokenizer.token_to_id))
     criterion = nn.CrossEntropyLoss()
