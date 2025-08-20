@@ -70,4 +70,3 @@ data/
 ```
 
 All files in `data/` use the [JSON Lines](https://jsonlines.org/) format.
-
