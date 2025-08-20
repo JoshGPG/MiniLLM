@@ -118,18 +118,64 @@ class SelfAttention(nn.Module):
 
 @dataclass
 class ModelConfig:
-    """Configuration for :class:`MiniTransformer`."""
+    """Configuration for :class:`MiniTransformer`.
+
+    Parameters
+    ----------
+    vocab_size:
+        Size of the vocabulary.
+    max_seq_len:
+        Maximum sequence length the model can process.
+    emb_dim:
+        Dimensionality of the token embeddings. Defaults to ``128``.
+    num_layers:
+        Number of :class:`TransformerBlock` layers. Defaults to ``2``.
+    num_heads:
+        Number of attention heads. Defaults to ``2``.
+    ffn_dim:
+        Hidden dimensionality of the feed-forward network. Defaults to ``256``.
+    learnable_pos:
+        If ``True``, positional encodings are learned. Otherwise sinusoidal
+        encodings are used. Defaults to ``False``.
+    dropout:
+        Dropout probability. Defaults to ``0.0``.
+    pre_norm:
+        Whether to apply pre-normalization. Defaults to ``True``.
+    tie_weights:
+        Share token embedding weights with the output projection. Defaults to
+        ``False``.
+    """
 
     vocab_size: int
-    emb_dim: int
-    num_heads: int
     max_seq_len: int = 512
+    emb_dim: int = 128
+    num_layers: int = 2
+    num_heads: int = 2
+    ffn_dim: int = 256
     learnable_pos: bool = False
     dropout: float = 0.0
-    ffn_dim: int | None = None
-    num_layers: int = 2
     pre_norm: bool = True
     tie_weights: bool = False
+
+    def __post_init__(self) -> None:
+        """Validate parameter ranges."""
+
+        if self.vocab_size <= 0:
+            raise ValueError("vocab_size must be positive")
+        if self.max_seq_len <= 0:
+            raise ValueError("max_seq_len must be positive")
+        if self.emb_dim <= 0:
+            raise ValueError("emb_dim must be positive")
+        if self.num_layers <= 0:
+            raise ValueError("num_layers must be positive")
+        if self.num_heads <= 0:
+            raise ValueError("num_heads must be positive")
+        if self.emb_dim % self.num_heads != 0:
+            raise ValueError("emb_dim must be divisible by num_heads")
+        if self.ffn_dim <= 0:
+            raise ValueError("ffn_dim must be positive")
+        if not 0.0 <= self.dropout <= 1.0:
+            raise ValueError("dropout must be in the range [0, 1]")
 
 
 class TransformerBlock(nn.Module):
