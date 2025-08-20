@@ -38,6 +38,7 @@ def main() -> None:
     config = ModelConfig(
         vocab_size=len(tokenizer.token_to_id),
         emb_dim=32,
+        num_heads=4,
         max_seq_len=len(encoded),
         learnable_pos=False,
     )
