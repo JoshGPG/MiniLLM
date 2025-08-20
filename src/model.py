@@ -1,4 +1,4 @@
-"""Neural network model definition for MiniLLM."""
+"""Neural network model definition for a mini Transformer."""
 
 from __future__ import annotations
 
@@ -104,7 +104,7 @@ class SelfAttention(nn.Module):
 
 @dataclass
 class ModelConfig:
-    """Configuration for :class:`MiniLLM`."""
+    """Configuration for :class:`MiniTransformer`."""
 
     vocab_size: int
     emb_dim: int
@@ -113,11 +113,47 @@ class ModelConfig:
     learnable_pos: bool = False
     dropout: float = 0.0
     ffn_dim: int | None = None
+    num_layers: int = 2
     pre_norm: bool = True
 
 
-class MiniLLM(nn.Module):
-    """A tiny language model built with PyTorch."""
+class TransformerBlock(nn.Module):
+    """Self-attention block followed by a feed-forward network."""
+
+    def __init__(
+        self,
+        emb_dim: int,
+        num_heads: int,
+        dropout: float = 0.0,
+        ffn_dim: int | None = None,
+        pre_norm: bool = True,
+    ) -> None:
+        super().__init__()
+        self.pre_norm = pre_norm
+        self.attention = SelfAttention(emb_dim, num_heads, dropout=dropout)
+        self.norm1 = nn.LayerNorm(emb_dim)
+        self.norm2 = nn.LayerNorm(emb_dim)
+        ffn_dim = ffn_dim or emb_dim * 4
+        self.ffn = nn.Sequential(
+            nn.Linear(emb_dim, ffn_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(ffn_dim, emb_dim),
+            nn.Dropout(dropout),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.pre_norm:
+            x = x + self.attention(self.norm1(x))
+            x = x + self.ffn(self.norm2(x))
+        else:
+            x = self.norm1(x + self.attention(x))
+            x = self.norm2(x + self.ffn(x))
+        return x
+
+
+class MiniTransformer(nn.Module):
+    """A tiny Transformer-based language model built with PyTorch."""
 
     def __init__(self, config: ModelConfig) -> None:
         super().__init__()
@@ -126,18 +162,17 @@ class MiniLLM(nn.Module):
         self.pos_encoding = PositionalEncoding(
             config.emb_dim, config.max_seq_len, config.learnable_pos
         )
-        self.attention = SelfAttention(
-            config.emb_dim, config.num_heads, dropout=config.dropout
-        )
-        self.norm1 = nn.LayerNorm(config.emb_dim)
-        self.norm2 = nn.LayerNorm(config.emb_dim)
-        ffn_dim = config.ffn_dim or config.emb_dim * 4
-        self.ffn = nn.Sequential(
-            nn.Linear(config.emb_dim, ffn_dim),
-            nn.GELU(),
-            nn.Dropout(config.dropout),
-            nn.Linear(ffn_dim, config.emb_dim),
-            nn.Dropout(config.dropout),
+        self.layers = nn.ModuleList(
+            [
+                TransformerBlock(
+                    config.emb_dim,
+                    config.num_heads,
+                    dropout=config.dropout,
+                    ffn_dim=config.ffn_dim,
+                    pre_norm=config.pre_norm,
+                )
+                for _ in range(config.num_layers)
+            ]
         )
         self.linear = nn.Linear(config.emb_dim, config.vocab_size)
 
@@ -146,11 +181,11 @@ class MiniLLM(nn.Module):
 
         x = self.embedding(ids)
         x = self.pos_encoding(x)
-        if self.config.pre_norm:
-            x = x + self.attention(self.norm1(x))
-            x = x + self.ffn(self.norm2(x))
-        else:
-            x = self.norm1(x + self.attention(x))
-            x = self.norm2(x + self.ffn(x))
+        for block in self.layers:
+            x = block(x)
         return self.linear(x)
+
+
+# Backwards compatibility for older imports
+MiniLLM = MiniTransformer
 

@@ -1,6 +1,6 @@
 """Top-level package for MiniLLM."""
 
-from .model import MiniLLM, ModelConfig
+from .model import MiniTransformer, ModelConfig
 
-__all__ = ["MiniLLM", "ModelConfig"]
+__all__ = ["MiniTransformer", "ModelConfig"]
 
