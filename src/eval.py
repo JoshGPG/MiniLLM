@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 import torch
 
-from .model import MiniLLM, ModelConfig
+from .model import MiniTransformer, ModelConfig
 from .tokenizer import Tokenizer
 
 VOCAB_PATH = Path("data/vocab.json")
@@ -43,7 +43,7 @@ def main() -> None:
         learnable_pos=False,
         ffn_dim=128,
     )
-    model = MiniLLM(config)
+    model = MiniTransformer(config)
 
     with torch.no_grad():
         logits = model(ids)

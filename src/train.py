@@ -10,7 +10,7 @@ from typing import List
 import torch
 from torch import nn, optim
 
-from .model import MiniLLM, ModelConfig
+from .model import MiniTransformer, ModelConfig
 from .tokenizer import Tokenizer
 
 
@@ -88,7 +88,7 @@ def main() -> None:
         learnable_pos=False,
         ffn_dim=128,
     )
-    model = MiniLLM(config)
+    model = MiniTransformer(config)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters())
 
