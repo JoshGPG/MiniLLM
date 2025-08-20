@@ -17,6 +17,20 @@ class Embedding(nn.Module):
         self.embedding = nn.Embedding(vocab_size, emb_dim)
 
     def forward(self, ids: torch.Tensor) -> torch.Tensor:
+        """Embed token IDs.
+
+        Parameters
+        ----------
+        ids: torch.Tensor
+            Integer tensor of shape ``(batch_size, seq_len)`` with values in
+            ``[0, vocab_size)`` and dtype ``torch.long``.
+
+        Returns
+        -------
+        torch.Tensor
+            Embedded tensor of shape ``(batch_size, seq_len, emb_dim)``.
+        """
+
         return self.embedding(ids)
 
 
@@ -181,13 +195,32 @@ class MiniTransformer(nn.Module):
             self.lm_head.weight = self.embedding.embedding.weight
 
     def forward(self, ids: torch.Tensor) -> torch.Tensor:
-        """Forward pass that embeds token IDs and predicts logits."""
+        """Convert token IDs to logits.
 
-        x = self.embedding(ids)
-        x = self.pos_encoding(x)
+        Pipeline
+        --------
+        1. Input tokens → embeddings → positional encodings.
+        2. Iterate through transformer blocks.
+        3. Feed final hidden states to output head → logits.
+
+        Parameters
+        ----------
+        ids: torch.Tensor
+            Tensor of token IDs with shape ``(batch_size, seq_len)`` and dtype
+            ``torch.long``. Each entry should be in the range
+            ``[0, config.vocab_size)``.
+
+        Returns
+        -------
+        torch.Tensor
+            Logit tensor of shape ``(batch_size, seq_len, config.vocab_size)``.
+        """
+
+        x = self.embedding(ids)  # (batch_size, seq_len, emb_dim)
+        x = self.pos_encoding(x)  # (batch_size, seq_len, emb_dim)
         for block in self.layers:
-            x = block(x)
-        logits = self.lm_head(x)
+            x = block(x)  # (batch_size, seq_len, emb_dim)
+        logits = self.lm_head(x)  # (batch_size, seq_len, vocab_size)
         return logits
 
 
