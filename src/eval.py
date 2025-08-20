@@ -41,6 +41,7 @@ def main() -> None:
         num_heads=4,
         max_seq_len=len(encoded),
         learnable_pos=False,
+        ffn_dim=128,
     )
     model = MiniLLM(config)
 

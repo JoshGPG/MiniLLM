@@ -112,6 +112,7 @@ class ModelConfig:
     max_seq_len: int = 512
     learnable_pos: bool = False
     dropout: float = 0.0
+    ffn_dim: int | None = None
 
 
 class MiniLLM(nn.Module):
@@ -127,6 +128,14 @@ class MiniLLM(nn.Module):
         self.attention = SelfAttention(
             config.emb_dim, config.num_heads, dropout=config.dropout
         )
+        ffn_dim = config.ffn_dim or config.emb_dim * 4
+        self.ffn = nn.Sequential(
+            nn.Linear(config.emb_dim, ffn_dim),
+            nn.GELU(),
+            nn.Dropout(config.dropout),
+            nn.Linear(ffn_dim, config.emb_dim),
+            nn.Dropout(config.dropout),
+        )
         self.linear = nn.Linear(config.emb_dim, config.vocab_size)
 
     def forward(self, ids: torch.Tensor) -> torch.Tensor:
@@ -135,5 +144,6 @@ class MiniLLM(nn.Module):
         x = self.embedding(ids)
         x = self.pos_encoding(x)
         x = self.attention(x)
+        x = self.ffn(x)
         return self.linear(x)
 

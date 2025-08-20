@@ -86,6 +86,7 @@ def main() -> None:
         num_heads=4,
         max_seq_len=max_len,
         learnable_pos=False,
+        ffn_dim=128,
     )
     model = MiniLLM(config)
     criterion = nn.CrossEntropyLoss()
