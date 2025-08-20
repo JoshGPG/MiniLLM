@@ -4,9 +4,20 @@ This module provides a minimal whitespace tokenizer with a small
 vocabulary builder. It supports adding special tokens required for the
 MiniLLM experiments and exposes ``fit``, ``encode`` and ``decode``
 methods.
+
+The vocabulary can be saved and restored using ``save_vocab`` and
+``load_vocab``::
+
+    tok = Tokenizer()
+    tok.fit(texts)
+    tok.save_vocab("vocab.json")
+
+    new_tok = Tokenizer()
+    new_tok.load_vocab("vocab.json")
 """
 
 from collections import Counter
+import json
 from typing import Iterable, List
 
 
@@ -100,6 +111,45 @@ class Tokenizer:
                 continue
             tokens.append(token)
         return " ".join(tokens)
+
+    # ------------------------------------------------------------------
+    def save_vocab(self, path: str) -> None:
+        """Save the vocabulary to ``path`` in JSON format.
+
+        The file stores the ``token_to_id`` mapping and IDs for the special
+        tokens so that a subsequent load yields identical mappings.
+        """
+
+        data = {
+            "token_to_id": self.token_to_id,
+            "pad_id": self.pad_id,
+            "bos_id": self.bos_id,
+            "eos_id": self.eos_id,
+            "unk_id": self.unk_id,
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    # ------------------------------------------------------------------
+    def load_vocab(self, path: str) -> None:
+        """Load a vocabulary from ``path``.
+
+        The file must have been created by :meth:`save_vocab`. Both the
+        token mappings and special token IDs are restored.
+        """
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        self.token_to_id = {
+            tok: int(idx) for tok, idx in data["token_to_id"].items()
+        }
+        self.id_to_token = {idx: tok for tok, idx in self.token_to_id.items()}
+
+        self.pad_id = data.get("pad_id", self.token_to_id.get(self.pad_token, 0))
+        self.bos_id = data.get("bos_id", self.token_to_id.get(self.bos_token, 1))
+        self.eos_id = data.get("eos_id", self.token_to_id.get(self.eos_token, 2))
+        self.unk_id = data.get("unk_id", self.token_to_id.get(self.unk_token, 3))
 
 
 __all__ = ["Tokenizer"]
