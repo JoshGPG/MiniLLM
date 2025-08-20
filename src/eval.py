@@ -7,20 +7,26 @@ from pathlib import Path
 import torch
 
 
-from .model import MiniLLM, ModelConfig
 from .model import MiniTransformer, ModelConfig
 from .tokenizer import Tokenizer
 
 VOCAB_PATH = Path("data/vocab.json")
+MODEL_PATH = Path("data/model.pt")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate the MiniLLM model")
     parser.add_argument(
-        "text",
-        nargs="?",
+        "--question",
+        type=str,
         default="hello world",
-        help="input text to evaluate",
+        help="question to evaluate",
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=str,
+        default=str(MODEL_PATH),
+        help="path to trained model weights",
     )
     return parser.parse_args()
 
@@ -34,10 +40,7 @@ def main() -> None:
     else:
         raise FileNotFoundError(f"Vocabulary file not found at {VOCAB_PATH}")
 
-    config = ModelConfig(vocab_size=len(tokenizer.token_to_id))
-    model = MiniLLM(config)
-
-    encoded = tokenizer.encode(args.text, add_bos=True, add_eos=True)
+    encoded = tokenizer.encode(args.question, add_bos=True, add_eos=True)
     ids = torch.tensor([encoded], dtype=torch.long)
 
     config = ModelConfig(
@@ -49,6 +52,9 @@ def main() -> None:
         ffn_dim=128,
     )
     model = MiniTransformer(config)
+    state = torch.load(args.checkpoint, map_location="cpu")
+    model.load_state_dict(state)
+    model.eval()
 
     with torch.no_grad():
         logits = model(ids)
@@ -56,9 +62,7 @@ def main() -> None:
     pred_ids = torch.argmax(logits, dim=-1).squeeze(0).tolist()
     decoded = tokenizer.decode(pred_ids, skip_special_tokens=True)
 
-    print("Logits:", logits)
-    print("Predicted token ids:", pred_ids)
-    print("Decoded prediction:", decoded)
+    print(decoded)
 
 
 if __name__ == "__main__":
