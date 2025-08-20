@@ -113,6 +113,7 @@ class ModelConfig:
     learnable_pos: bool = False
     dropout: float = 0.0
     ffn_dim: int | None = None
+    pre_norm: bool = True
 
 
 class MiniLLM(nn.Module):
@@ -128,6 +129,8 @@ class MiniLLM(nn.Module):
         self.attention = SelfAttention(
             config.emb_dim, config.num_heads, dropout=config.dropout
         )
+        self.norm1 = nn.LayerNorm(config.emb_dim)
+        self.norm2 = nn.LayerNorm(config.emb_dim)
         ffn_dim = config.ffn_dim or config.emb_dim * 4
         self.ffn = nn.Sequential(
             nn.Linear(config.emb_dim, ffn_dim),
@@ -143,7 +146,11 @@ class MiniLLM(nn.Module):
 
         x = self.embedding(ids)
         x = self.pos_encoding(x)
-        x = self.attention(x)
-        x = self.ffn(x)
+        if self.config.pre_norm:
+            x = x + self.attention(self.norm1(x))
+            x = x + self.ffn(self.norm2(x))
+        else:
+            x = self.norm1(x + self.attention(x))
+            x = self.norm2(x + self.ffn(x))
         return self.linear(x)
 
