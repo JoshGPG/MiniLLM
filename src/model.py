@@ -292,9 +292,29 @@ class MiniTransformer(nn.Module):
             ]
         )
         self.lm_head = nn.Linear(config.emb_dim, config.vocab_size, bias=False)
+        self.init_weights()
         if config.tie_weights:
             # Share weights between embedding and output projection
             self.lm_head.weight = self.embedding.embedding.weight
+
+    def init_weights(self) -> None:
+        """Initialize model parameters.
+
+        Linear layers use Xavier initialization while embedding matrices are
+        drawn from a normal distribution. This helps keep activation scales
+        uniform across layers, leading to more stable gradients and faster
+        convergence during training.
+        """
+
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                nn.init.xavier_uniform_(module.weight)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
+            elif isinstance(module, nn.Embedding):
+                nn.init.normal_(
+                    module.weight, mean=0.0, std=module.weight.size(1) ** -0.5
+                )
 
     def forward(self, ids: torch.Tensor) -> torch.Tensor:
         """Convert token IDs to logits.
