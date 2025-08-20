@@ -115,6 +115,7 @@ class ModelConfig:
     ffn_dim: int | None = None
     num_layers: int = 2
     pre_norm: bool = True
+    tie_weights: bool = False
 
 
 class TransformerBlock(nn.Module):
@@ -174,7 +175,10 @@ class MiniTransformer(nn.Module):
                 for _ in range(config.num_layers)
             ]
         )
-        self.linear = nn.Linear(config.emb_dim, config.vocab_size)
+        self.lm_head = nn.Linear(config.emb_dim, config.vocab_size, bias=False)
+        if config.tie_weights:
+            # Share weights between embedding and output projection
+            self.lm_head.weight = self.embedding.embedding.weight
 
     def forward(self, ids: torch.Tensor) -> torch.Tensor:
         """Forward pass that embeds token IDs and predicts logits."""
@@ -183,7 +187,8 @@ class MiniTransformer(nn.Module):
         x = self.pos_encoding(x)
         for block in self.layers:
             x = block(x)
-        return self.linear(x)
+        logits = self.lm_head(x)
+        return logits
 
 
 # Backwards compatibility for older imports
