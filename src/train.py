@@ -80,7 +80,7 @@ def main() -> None:
 
     targets = inputs.clone()
 
-    model = MiniLLM(vocab_size=len(tokenizer.token_to_id))
+    model = MiniLLM(vocab_size=len(tokenizer.token_to_id), emb_dim=32)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters())
 
