@@ -7,6 +7,8 @@ from typing import Optional
 import torch
 from torch import nn
 
+__all__ = ["ModelConfig", "MiniLLM"]
+
 
 @dataclass
 class ModelConfig:

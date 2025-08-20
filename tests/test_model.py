@@ -17,7 +17,7 @@ def test_forward_shape():
 def test_parameter_tying():
     config = ModelConfig(vocab_size=10, hidden_size=8, tie_weights=True)
     model = MiniLLM(config)
-    assert model.linear.weight.data_ptr() == model.embedding.weight.data_ptr()
+    assert model.linear.weight is model.embedding.weight
     ids = torch.randint(0, config.vocab_size, (1, 3))
     out = model(ids)
     assert out.shape == (1, 3, config.vocab_size)
