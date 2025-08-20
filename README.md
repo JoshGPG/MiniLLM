@@ -109,3 +109,11 @@ print(f"{params/1e6:.2f}M parameters (~{params*4/1e6:.2f} MB)")
 
 Running the code prints approximately `3.35M parameters (~13 MB)` for the
 configuration above.
+
+## Weight Initialization
+
+All linear layers in MiniLLM are initialized with Xavier initialization and
+embedding tables are drawn from a normal distribution. These schemes keep the
+scale of activations roughly constant across layers, which generally leads to
+more stable gradients and faster convergence during training.
+

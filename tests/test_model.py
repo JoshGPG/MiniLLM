@@ -7,7 +7,7 @@ from model import MiniLLM, ModelConfig
 
 
 def test_forward_shape():
-    config = ModelConfig(vocab_size=10, hidden_size=8)
+    config = ModelConfig(vocab_size=10, emb_dim=8)
     model = MiniLLM(config)
     ids = torch.randint(0, config.vocab_size, (2, 4))
     out = model(ids)
@@ -15,9 +15,9 @@ def test_forward_shape():
 
 
 def test_parameter_tying():
-    config = ModelConfig(vocab_size=10, hidden_size=8, tie_weights=True)
+    config = ModelConfig(vocab_size=10, emb_dim=8, tie_weights=True)
     model = MiniLLM(config)
-    assert model.linear.weight is model.embedding.weight
+    assert model.lm_head.weight is model.embedding.embedding.weight
     ids = torch.randint(0, config.vocab_size, (1, 3))
     out = model(ids)
     assert out.shape == (1, 3, config.vocab_size)
@@ -25,17 +25,17 @@ def test_parameter_tying():
 
 def test_positional_encoding_options():
     torch.manual_seed(0)
-    config_none = ModelConfig(vocab_size=10, hidden_size=8, max_seq_len=4, positional_encoding=None)
-    model_none = MiniLLM(config_none)
-    ids = torch.randint(0, config_none.vocab_size, (2, 4))
-    out_none = model_none(ids)
-
-    torch.manual_seed(0)
-    config_sin = ModelConfig(vocab_size=10, hidden_size=8, max_seq_len=4, positional_encoding="sinusoidal")
+    config_sin = ModelConfig(vocab_size=10, emb_dim=8, max_seq_len=4, learnable_pos=False)
     model_sin = MiniLLM(config_sin)
+    ids = torch.randint(0, config_sin.vocab_size, (2, 4))
     out_sin = model_sin(ids)
 
-    assert out_sin.shape == out_none.shape == (2, 4, config_none.vocab_size)
-    assert model_none.positional_encoding is None
-    assert model_sin.positional_encoding is not None
-    assert not torch.allclose(out_sin, out_none)
+    torch.manual_seed(0)
+    config_learn = ModelConfig(vocab_size=10, emb_dim=8, max_seq_len=4, learnable_pos=True)
+    model_learn = MiniLLM(config_learn)
+    out_learn = model_learn(ids)
+
+    assert out_sin.shape == out_learn.shape == (2, 4, config_sin.vocab_size)
+    assert model_sin.pos_encoding.learnable is False
+    assert model_learn.pos_encoding.learnable is True
+    assert not torch.allclose(out_sin, out_learn)
