@@ -10,6 +10,7 @@ from typing import List
 import torch
 from torch import nn, optim
 
+from .model import MiniLLM, ModelConfig
 from .model import MiniTransformer, ModelConfig
 from .tokenizer import Tokenizer
 
@@ -80,6 +81,8 @@ def main() -> None:
 
     targets = inputs.clone()
 
+    config = ModelConfig(vocab_size=len(tokenizer.token_to_id))
+    model = MiniLLM(config)
     config = ModelConfig(
         vocab_size=len(tokenizer.token_to_id),
         emb_dim=32,

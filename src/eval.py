@@ -6,6 +6,8 @@ import argparse
 from pathlib import Path
 import torch
 
+
+from .model import MiniLLM, ModelConfig
 from .model import MiniTransformer, ModelConfig
 from .tokenizer import Tokenizer
 
@@ -31,6 +33,9 @@ def main() -> None:
         tokenizer.load_vocab(str(VOCAB_PATH))
     else:
         raise FileNotFoundError(f"Vocabulary file not found at {VOCAB_PATH}")
+
+    config = ModelConfig(vocab_size=len(tokenizer.token_to_id))
+    model = MiniLLM(config)
 
     encoded = tokenizer.encode(args.text, add_bos=True, add_eos=True)
     ids = torch.tensor([encoded], dtype=torch.long)
