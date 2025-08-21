@@ -11,7 +11,7 @@ from .model import MiniTransformer, ModelConfig
 from .tokenizer import Tokenizer
 
 VOCAB_PATH = Path("data/vocab.json")
-MODEL_PATH = Path("data/model.pt")
+MODEL_PATH = Path("experiments/run/model.pt")
 
 
 def parse_args() -> argparse.Namespace:

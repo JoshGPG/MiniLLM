@@ -110,6 +110,25 @@ print(f"{params/1e6:.2f}M parameters (~{params*4/1e6:.2f} MB)")
 Running the code prints approximately `3.35M parameters (~13 MB)` for the
 configuration above.
 
+## Training and Checkpoints
+
+Train the model with:
+
+```bash
+python src/train.py --run-dir experiments/run
+```
+
+This writes the trained weights to `experiments/run/model.pt`. The same file can
+be used for text generation or evaluation:
+
+```bash
+# Generate text
+python src/generate.py --checkpoint experiments/run/model.pt "your prompt"
+
+# Evaluate a question
+python src/eval.py --checkpoint experiments/run/model.pt --question "your question"
+```
+
 ## Weight Initialization
 
 All linear layers in MiniLLM are initialized with Xavier initialization and
