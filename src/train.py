@@ -162,10 +162,8 @@ def main() -> None:
         val_loss /= max(1, len(val_loader))
 
         generated = generate_answer(model, tokenizer, sample_question, max_seq_len)
-        # Save model parameters as JSON to avoid binary .pt files
-        state_dict = {k: v.tolist() for k, v in model.state_dict().items()}
-        with (run_dir / f"model_epoch{epoch}.json").open("w", encoding="utf-8") as f:
-            json.dump(state_dict, f)
+        # Save model parameters for later use
+        torch.save(model.state_dict(), run_dir / "model.pt")
 
         entry = {
             "epoch": epoch,
