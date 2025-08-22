@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import List, Tuple
 
@@ -11,8 +12,13 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, Dataset
 
-from .model import MiniTransformer, ModelConfig
-from .tokenizer import Tokenizer
+# The training script can be executed directly (``python src/train.py``) or as a
+# module (``python -m src.train``). Add the repository root to ``sys.path`` when
+# run as a script so that absolute imports remain valid.
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+from src.model import MiniTransformer, ModelConfig
+from src.tokenizer import Tokenizer
 
 VOCAB_PATH = Path("data/vocab.json")
 # Data splits are stored in JSON Lines format

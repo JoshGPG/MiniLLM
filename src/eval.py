@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 import torch
 
-
-from .model import MiniTransformer, ModelConfig
-from .tokenizer import Tokenizer
+# Allow execution via ``python src/eval.py`` by ensuring the repository root is
+# on ``sys.path`` before importing package modules.
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+from src.model import MiniTransformer, ModelConfig
+from src.tokenizer import Tokenizer
 
 VOCAB_PATH = Path("data/vocab.json")
 MODEL_PATH = Path("experiments/run/model.pt")
@@ -67,3 +71,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
