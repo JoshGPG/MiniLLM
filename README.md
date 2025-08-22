@@ -110,24 +110,29 @@ print(f"{params/1e6:.2f}M parameters (~{params*4/1e6:.2f} MB)")
 Running the code prints approximately `3.35M parameters (~13 MB)` for the
 configuration above.
 
-## Training and Checkpoints
+## Training
 
-Train the model with:
+Start a training run with:
 
 ```bash
 python src/train.py --run-dir experiments/run
 ```
 
-This writes the trained weights to `experiments/run/model.pt`. The same file can
-be used for text generation or evaluation:
+The script builds a tokenizer and writes two artefacts to the run directory:
+`vocab.json`, containing the tokenizer vocabulary, and `model.pt`, holding the
+trained weights. These files are saved under `experiments/run/` by default and
+should be included when packaging or deploying the model.
+
+## Evaluation
+
+After training, you can query the model from the command line:
 
 ```bash
-# Generate text
-python src/generate.py --checkpoint experiments/run/model.pt "your prompt"
-
-# Evaluate a question
-python src/eval.py --checkpoint experiments/run/model.pt --question "your question"
+python src/eval.py --question "What is the largest planet?"
 ```
+
+By default the script looks for `experiments/run/vocab.json` and
+`experiments/run/model.pt` to load the tokenizer and checkpoint.
 
 ## Weight Initialization
 
