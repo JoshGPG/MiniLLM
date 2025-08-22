@@ -38,6 +38,10 @@ def save_dataset(pairs: List[Dict[str, str]], path: Path) -> None:
     if final_path.suffix == ".json":
         with final_path.open("w", encoding="utf-8") as f:
             json.dump(items, f, ensure_ascii=False, indent=2)
+    elif final_path.suffix == ".jsonl":
+        with final_path.open("w", encoding="utf-8") as f:
+            for item in items:
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
     elif final_path.suffix == ".csv":
         fieldnames = ["question", "answer"] + (["context"] if has_context else [])
         with final_path.open("w", newline="", encoding="utf-8") as f:
@@ -132,6 +136,10 @@ def save_dataset(pairs: Iterable[Dict[str, str]], path: Path) -> None:
     if path.suffix == ".json":
         with path.open("w", encoding="utf-8") as f:
             json.dump(cleaned, f, ensure_ascii=False, indent=2)
+    elif path.suffix == ".jsonl":
+        with path.open("w", encoding="utf-8") as f:
+            for item in cleaned:
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
     elif path.suffix == ".csv":
         import csv
 
@@ -170,9 +178,9 @@ def split_dataset(
     test_pairs = shuffled[val_end:]
 
     SPLITS_DIR.mkdir(parents=True, exist_ok=True)
-    save_dataset(train_pairs, SPLITS_DIR / "train.json")
-    save_dataset(val_pairs, SPLITS_DIR / "val.json")
-    save_dataset(test_pairs, SPLITS_DIR / "test.json")
+    save_dataset(train_pairs, SPLITS_DIR / "train.jsonl")
+    save_dataset(val_pairs, SPLITS_DIR / "val.jsonl")
+    save_dataset(test_pairs, SPLITS_DIR / "test.jsonl")
 
     return train_pairs, val_pairs, test_pairs
 
