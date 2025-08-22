@@ -15,16 +15,18 @@ from .model import MiniTransformer, ModelConfig
 from .tokenizer import Tokenizer
 
 VOCAB_PATH = Path("data/vocab.json")
-TRAIN_PATH = Path("data/splits/train.json")
-VAL_PATH = Path("data/splits/val.json")
+# Data splits are stored in JSON Lines format
+TRAIN_PATH = Path("data/splits/train.jsonl")
+VAL_PATH = Path("data/splits/val.jsonl")
 
 
 class QADataset(Dataset):
     """Dataset of tokenised question–answer pairs."""
 
     def __init__(self, path: Path, tokenizer: Tokenizer, limit: int | None = None) -> None:
+        # Each line in the dataset file is a JSON object with question and answer
         with path.open("r", encoding="utf-8") as f:
-            data = json.load(f)
+            data = [json.loads(line) for line in f if line.strip()]
         if limit is not None:
             data = data[:limit]
         self.pairs = data
@@ -101,7 +103,7 @@ def main() -> None:
     for path in [TRAIN_PATH, VAL_PATH]:
         if path.exists():
             with path.open("r", encoding="utf-8") as f:
-                data = json.load(f)
+                data = [json.loads(line) for line in f if line.strip()]
             texts.extend(f"{d['question']} {d['answer']}".strip() for d in data)
     tokenizer.fit(texts, vocab_size=args.vocab_size)
     VOCAB_PATH.parent.mkdir(parents=True, exist_ok=True)

@@ -64,9 +64,9 @@ data/
 ├── processed/
 │   └── qa_pairs.jsonl        # Generated question/answer pairs
 └── splits/
-    ├── train.jsonl          # Training set (JSONL)
-    ├── val.jsonl            # Validation set (JSONL)
-    └── test.jsonl           # Test set (JSONL)
+    ├── train.jsonl          # Training set (one JSON object per line)
+    ├── val.jsonl            # Validation set (one JSON object per line)
+    └── test.jsonl           # Test set (one JSON object per line)
 ```
 
 All files in `data/` use the [JSON Lines](https://jsonlines.org/) format.
