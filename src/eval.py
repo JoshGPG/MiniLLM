@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+import json
 import torch
 
 # Allow execution via ``python src/eval.py`` by ensuring the repository root is
@@ -38,25 +39,40 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
+    checkpoint_path = Path(args.checkpoint)
+    run_dir = checkpoint_path.parent
+
     tokenizer = Tokenizer()
-    if VOCAB_PATH.exists():
+    vocab_file = run_dir / "vocab.json"
+    if vocab_file.exists():
+        tokenizer.load_vocab(str(vocab_file))
+    elif VOCAB_PATH.exists():
         tokenizer.load_vocab(str(VOCAB_PATH))
     else:
-        raise FileNotFoundError(f"Vocabulary file not found at {VOCAB_PATH}")
+        raise FileNotFoundError(f"Vocabulary file not found at {vocab_file} or {VOCAB_PATH}")
 
     encoded = tokenizer.encode(args.question, add_bos=True, add_eos=True)
     ids = torch.tensor([encoded], dtype=torch.long)
 
-    config = ModelConfig(
-        vocab_size=len(tokenizer.token_to_id),
-        emb_dim=32,
-        num_heads=4,
-        max_seq_len=len(encoded),
-        learnable_pos=False,
-        ffn_dim=128,
-    )
+    config_path = run_dir / "model_config.json"
+    if config_path.exists():
+        with config_path.open("r", encoding="utf-8") as f:
+            cfg_dict = json.load(f)
+        config = ModelConfig(**cfg_dict)
+        if len(encoded) > config.max_seq_len:
+            config.max_seq_len = len(encoded)
+    else:
+        config = ModelConfig(
+            vocab_size=len(tokenizer.token_to_id),
+            emb_dim=32,
+            num_layers=2,
+            num_heads=2,
+            max_seq_len=len(encoded),
+            ffn_dim=64,
+        )
+
     model = MiniTransformer(config)
-    state = torch.load(args.checkpoint, map_location="cpu")
+    state = torch.load(checkpoint_path, map_location="cpu")
     model.load_state_dict(state)
     model.eval()
 

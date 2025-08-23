@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 from typing import List, Tuple
+from dataclasses import asdict
 
 import torch
 from torch import nn, optim
@@ -136,6 +137,8 @@ def main() -> None:
         num_heads=2,
         ffn_dim=64,
     )
+    with (run_dir / "model_config.json").open("w", encoding="utf-8") as f:
+        json.dump(asdict(config), f, indent=2)
     model = MiniTransformer(config)
 
     criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_id)
