@@ -9,6 +9,23 @@ on:
 jobs:
   apply:
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-2
+      TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+      TF_STATE_KEY: infra/terraform.tfstate
+      TF_VAR_region: ${{ env.AWS_REGION }}
     steps:
       - uses: actions/checkout@v4
-      - run: echo "Apply infrastructure"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Init and validate infrastructure
+        working-directory: infra
+        run: |
+          tofu init -backend-config="bucket=${TF_STATE_BUCKET}" \
+                    -backend-config="key=${TF_STATE_KEY}" \
+                    -backend-config="region=${AWS_REGION}" \
+                    -input=false
+          tofu validate
