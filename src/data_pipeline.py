@@ -11,12 +11,19 @@ import argparse
 import json
 import random
 import re
+import sys
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
 import wikipedia
 
-from .utils import save_text
+if __package__ in {None, ""}:
+    src_dir = Path(__file__).resolve().parent
+    if str(src_dir) not in sys.path:
+        sys.path.insert(0, str(src_dir))
+    from utils import save_text
+else:
+    from .utils import save_text
 
 RAW_DIR = Path("data/raw")
 PROCESSED_DIR = Path("data/processed")
