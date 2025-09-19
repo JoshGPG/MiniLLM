@@ -161,6 +161,17 @@ class SelfAttention(nn.Module):
         attn_mask: torch.Tensor | None = None,
         key_padding_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
+        if attn_mask is None:
+            seq_len = x.size(1)
+            # Disallow attention to future positions so training matches
+            # autoregressive generation during inference.
+            attn_mask = torch.ones(
+                seq_len,
+                seq_len,
+                device=x.device,
+                dtype=torch.bool,
+            )
+            attn_mask = torch.triu(attn_mask, diagonal=1)
         out, _ = self.attn(
             x,
             x,
