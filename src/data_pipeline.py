@@ -16,6 +16,29 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
 import wikipedia
+from bs4 import BeautifulSoup as _BeautifulSoup
+
+
+def _configure_wikipedia_parser() -> None:
+    """Ensure the wikipedia package uses a stable HTML parser."""
+
+    try:
+        soup_factory = wikipedia.wikipedia.BeautifulSoup
+    except AttributeError:
+        return
+
+    if getattr(soup_factory, "__name__", "") == "_patched_wikipedia_beautifulsoup":
+        return
+
+    def _patched_wikipedia_beautifulsoup(*args, **kwargs):
+        if "features" not in kwargs or not kwargs["features"]:
+            kwargs["features"] = "html.parser"
+        return _BeautifulSoup(*args, **kwargs)
+
+    wikipedia.wikipedia.BeautifulSoup = _patched_wikipedia_beautifulsoup
+
+
+_configure_wikipedia_parser()
 
 if __package__ in {None, ""}:
     src_dir = Path(__file__).resolve().parent
