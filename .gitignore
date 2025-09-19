@@ -1,20 +1,5 @@
-# Node dependencies
-node_modules/
-
-# Build artifacts
-frontend/dist/*
-!frontend/dist/.gitkeep
-*.log
-*.zip
-
-# Python virtualenvs
 .venv/
-
-# Terraform
-.terraform/
-terraform.tfstate
-terraform.tfstate.*
-.terraform.lock.hcl
-
-# OS
+__pycache__/
+*.pyc
 .DS_Store
+*.pt
