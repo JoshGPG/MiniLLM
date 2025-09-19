@@ -1,0 +1,9 @@
+{
+  "epochs": 2,
+  "batch_size": 2,
+  "lr": 0.01,
+  "run_dir": "experiments/exp1",
+  "vocab_size": 50,
+  "num_layers": 1,
+  "limit": null
+}
