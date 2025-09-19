@@ -36,6 +36,43 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _greedy_decode(
+    model: MiniTransformer,
+    tokenizer: Tokenizer,
+    prompt_ids: list[int],
+    max_length: int,
+) -> list[int]:
+    """Generate tokens using simple greedy decoding.
+
+    Parameters
+    ----------
+    model:
+        The autoregressive language model.
+    tokenizer:
+        Tokenizer providing ``eos_id`` for early stopping.
+    prompt_ids:
+        Initial sequence of token ids (typically ``<BOS>`` + question tokens).
+    max_length:
+        Maximum length of the full sequence (prompt + generated tokens).
+    """
+
+    generated = list(prompt_ids)
+    device = next(model.parameters()).device
+    input_ids = torch.tensor([generated], dtype=torch.long, device=device)
+
+    max_new_tokens = max(0, max_length - len(prompt_ids))
+    for _ in range(max_new_tokens):
+        with torch.no_grad():
+            logits = model(input_ids)
+        next_token = int(torch.argmax(logits[0, -1]))
+        generated.append(next_token)
+        if next_token == tokenizer.eos_id:
+            break
+        input_ids = torch.tensor([generated], dtype=torch.long, device=device)
+
+    return generated
+
+
 def main() -> None:
     args = parse_args()
 
@@ -49,10 +86,11 @@ def main() -> None:
     elif VOCAB_PATH.exists():
         tokenizer.load_vocab(str(VOCAB_PATH))
     else:
-        raise FileNotFoundError(f"Vocabulary file not found at {vocab_file} or {VOCAB_PATH}")
+        raise FileNotFoundError(
+            f"Vocabulary file not found at {vocab_file} or {VOCAB_PATH}"
+        )
 
-    encoded = tokenizer.encode(args.question, add_bos=True, add_eos=True)
-    ids = torch.tensor([encoded], dtype=torch.long)
+    encoded = tokenizer.encode(args.question, add_bos=True)
 
     config_path = run_dir / "model_config.json"
     if config_path.exists():
@@ -76,13 +114,11 @@ def main() -> None:
     model.load_state_dict(state)
     model.eval()
 
-    with torch.no_grad():
-        logits = model(ids)
+    full_sequence = _greedy_decode(model, tokenizer, encoded, config.max_seq_len)
+    answer_ids = full_sequence[len(encoded) :]
+    decoded = tokenizer.decode(answer_ids, skip_special_tokens=True)
 
-    pred_ids = torch.argmax(logits, dim=-1).squeeze(0).tolist()
-    decoded = tokenizer.decode(pred_ids, skip_special_tokens=True)
-
-    print(decoded)
+    print(decoded.strip())
 
 
 if __name__ == "__main__":
