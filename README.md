@@ -16,6 +16,32 @@ MiniLLM focuses on straightforward factual domains such as astronomy, human anat
    pip install -r requirements.txt
    ```
 
+## AWS IAM Policy
+
+If you are running MiniLLM in an AWS environment that needs to read or update
+Route53 hosted zones, attach the following IAM policy to the role or user that
+executes the deployment scripts:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Route53ReadAccess",
+      "Effect": "Allow",
+      "Action": [
+        "route53:ListHostedZones",
+        "route53:ListHostedZonesByName",
+        "route53:GetHostedZone",
+        "route53:ChangeResourceRecordSets",
+        "route53:ListResourceRecordSets"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
 ## Repository Structure
 ```
 mini_llm/
